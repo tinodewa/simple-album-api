@@ -2,51 +2,28 @@ package controllers
 
 import (
 	"context"
-	"hit/album-mongo-api/models"
-	"os"
+	"hit/album-mongo-api/database"
+	"net/http"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/gin-gonic/gin"
 )
 
-var client *mongo.Client
-
-func InsertAlbum(ctx context.Context, client *mongo.Client, album models.Album) (*mongo.InsertOneResult, error) {
-	// Setting db and collection
-	// Provide the name of the database and collection you want to use.
-	// If they don't already exist, the driver and Atlas will create them
-	// automatically when you first write data.
-	var dbName = os.Getenv("DB_NAME")
-	var collectionName = os.Getenv("COLLECTION_NAME")
-	collection := client.Database(dbName).Collection(collectionName)
-
-	insertResult, err := collection.InsertOne(ctx, album)
+func GetAlbums(c *gin.Context) {
+	// Connect to MongoDB
+	client, err := database.GetMongoClient()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
+	defer client.Disconnect(context.Background())
 
-	return insertResult, nil
+	ctx := context.Background()
 
-}
-
-func GetAlbums(ctx context.Context, client *mongo.Client) ([]models.Album, error) {
-	// Setting db and collection
-	// Provide the name of the database and collection you want to use.
-	// If they don't already exist, the driver and Atlas will create them
-	// automatically when you first write data.
-	var dbName = os.Getenv("DB_NAME")
-	var collectionName = os.Getenv("COLLECTION_NAME")
-	collection := client.Database(dbName).Collection(collectionName)
-
-	cursor, err := collection.Find(ctx, bson.M{})
+	//use the global client
+	albums, err := database.GetAlbums(ctx, client)
 	if err != nil {
-		return nil, err
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	var albums []models.Album
-	if err = cursor.All(ctx, &albums); err != nil {
-		return nil, err
-	}
-
-	return albums, nil
+	c.JSON(http.StatusOK, albums)
 }

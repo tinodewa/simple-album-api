@@ -1,4 +1,4 @@
-package controllers
+package database
 
 import (
 	"context"
@@ -10,15 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-// MongoDB Singleton Struct
-// type mongoClient struct {
-// 	client *mongo.Client
-// 	ctx    context.Context
-// 	once   sync.Once
-// }
-
-// var mongoInstance mongoClient
 
 // Connect app to mongoDB atlas
 func GetMongoClient() (*mongo.Client, error) {
@@ -39,12 +30,6 @@ func GetMongoClient() (*mongo.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// defer func() {
-	// 	if err = client.Disconnect(ctx); err != nil {
-	// 		panic(err)
-	// 	}
-	// }()
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
